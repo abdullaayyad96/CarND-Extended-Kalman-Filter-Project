@@ -44,6 +44,11 @@ private:
   Eigen::MatrixXd R_radar_;
   Eigen::MatrixXd H_laser_;
   Eigen::MatrixXd Hj_;
+  
+  //variable to store phi angle
+  float phi;
+
+  float noise_ax, noise_ay;
 };
 
 #endif /* FusionEKF_H_ */
