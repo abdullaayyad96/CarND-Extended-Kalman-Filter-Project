@@ -26,8 +26,7 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 
 void KalmanFilter::Predict() {
   /**
-  TODO:
-    * predict the state
+    * predict the mean states and state covariance matrix
   */
 	x_ = F_ * x_;
 	MatrixXd Ft = F_.transpose();
@@ -36,16 +35,15 @@ void KalmanFilter::Predict() {
 
 void KalmanFilter::Update(const VectorXd &z) {
   /**
-  TODO:
     * update the state by using Kalman Filter equations
   */
-	VectorXd z_pred = H_ * x_;
-	VectorXd y = z - z_pred;
-	MatrixXd Ht = H_.transpose();
-	MatrixXd S = H_ * P_ * Ht + R_;
+	VectorXd z_pred = H_ * x_; //estimated prediction
+	VectorXd y = z - z_pred; //error vector
+	MatrixXd Ht = H_.transpose(); 
+	MatrixXd S = H_ * P_ * Ht + R_; 
 	MatrixXd Si = S.inverse();
 	MatrixXd PHt = P_ * Ht;
-	MatrixXd K = PHt * Si;
+	MatrixXd K = PHt * Si; // kalman gain
 
 	//new estimate
 	x_ = x_ + (K * y);
@@ -56,9 +54,9 @@ void KalmanFilter::Update(const VectorXd &z) {
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
   /**
-  TODO:
     * update the state by using Extended Kalman Filter equations
   */
+
 	float px = x_(0);
 	float py = x_(1);
 	float vx = x_(2);
@@ -67,22 +65,27 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
 	VectorXd z_pred = VectorXd(3);
 
-	float p_pred = sqrt(px*px + py * py);
-	float phi_pred = atan2(py, px); //return the correct quadrant
-	float v_pred;
-	if (p_pred != 0) {
-		v_pred = (px * vx + py * vy) / p_pred;
-	}
-	else {
+	float p_pred = sqrt(px*px + py * py); //predicted distance
+	float phi_pred = atan2(py, px); // predicted polar angle
+	// predict velocity
+	float v_pred; 
+	if (p_pred == 0) {
+		//check division by zero
 		cout << " division by zero" << endl;
 		return;
 	}
+	else {
+		v_pred = (px * vx + py * vy) / p_pred;
+	}
 
+	//update preidiction vector
 	z_pred << p_pred, phi_pred, v_pred;
 
+	//error vector
 	VectorXd y = z - z_pred;
 
-	while (y[1] > PI) {
+	// check that polar angle is between +-pi
+	while (y[1] > PI) { 
 		y[1] -= 2 * PI;
 	}
 	while (y[1]  < -PI) {
@@ -94,7 +97,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 	MatrixXd S = H_ * P_ * Ht + R_;
 	MatrixXd Si = S.inverse();
 	MatrixXd PHt = P_ * Ht;
-	MatrixXd K = PHt * Si;
+	MatrixXd K = PHt * Si; //kalman gain
 
 	//new estimate
 	x_ = x_ + (K * y);
